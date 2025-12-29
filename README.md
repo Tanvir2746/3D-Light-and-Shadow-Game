@@ -1,1 +1,3 @@
 # 3D-Light-and-Shadow-Game
+
+The 3D Light and Shadow Game is a dynamic and immersive puzzle-solving experience where the player controls a movable light source within a dark 3D environment. The primary objective is to use the light to reveal hidden objects, paths, and enemies by manipulating the shadows and illuminating various parts of the world. With the use of OpenGL and GLUT, we can achieve a series of essential features that contribute to the game's interactive and visually engaging gameplay. The following sections outline the features that can be easily and effectively implemented using these libraries.
