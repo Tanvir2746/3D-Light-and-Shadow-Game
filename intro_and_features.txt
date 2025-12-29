@@ -111,5 +111,22 @@ P → Pause/Resume
 When paused:
 Player and enemy movement freezes
 Screen darkens and text (PAUSED) displayed
+13. Power-Up Items (Light Boost & Enemy Slowdown)
+Description:
+ Collectable power-ups provide temporary advantages.
+Implementation:
+Press E near a power-up to grab it.
+Light Boost: Flashlight power increases to 200% for 10 seconds.
+Enemy Slowdown: Visible enemies move slower for a short time.
+Timers reset effects automatically.
+
+
+14. Outfit Colour Change (Key: U)
+Description:
+ Allows players to customize their look during gameplay.
+Implementation:
+Press U to randomise the player outfit colour.
+Colour updates immediately in the next frame.
+
 
 
