@@ -5,8 +5,8 @@ import math
 import random
 import time
 
-grid_size = 1000
-cell_size = 0.4
+grid_size = 100
+cell_size = 1
 player_x = grid_size / 4
 player_z = grid_size / 2
 player_rotation = 0
@@ -43,13 +43,22 @@ def draw_text(x, y, text, font=GLUT_BITMAP_TIMES_ROMAN_20):
     glMatrixMode(GL_MODELVIEW)
 
 def draw_ground():
-    subdivisions = 4
+    subdivisions = 2
     mini = cell_size / subdivisions
-    for i in range(grid_size):
-        for j in range(grid_size):
+    radius = 60
+    for i in range(int(player_x - radius), int(player_x + radius)):
+        for j in range(int(player_z - radius), int(player_z + radius)):
+            if i < 0 or j < 0 or i >= grid_size or j >= grid_size:
+                continue
             for x in range(subdivisions):
                 for z in range(subdivisions):
-                    shade = 0.4 + 0.05 * ((i + j + x + z) % 3)
+                    n = (                                               # mixed noise 
+                        (i * 37.1 + j * 91.7) *
+                        (x + 1.3) *
+                        (z + 2.1)
+                    )
+                    noise = (n % 1.0) * 0.08                            # small noise
+                    shade = 0.42 + noise                                # smooth base green
                     glColor3f(0.1, shade, 0.1)
                     base_x = i * cell_size + x * mini
                     base_z = j * cell_size + z * mini
@@ -64,7 +73,61 @@ def draw_walls():
     return
 
 def draw_player():
-    return
+    glPushMatrix()
+    glTranslatef(player_x, 0, player_z)
+    glRotatef(player_rotation, 0, 1, 0)
+    glScalef(0.8, 0.8, 0.8)
+    if is_game_over:
+        glRotatef(90, 1, 0, 0)
+
+    quad = gluNewQuadric()
+    glColor3f(0.0, 0.0, 1.0)                        # Legs
+    for x_offset in [-0.15, 0.15]:
+        glPushMatrix()
+        glTranslatef(x_offset, 0.35, 0)
+        glRotatef(-90, 1, 0, 0)
+        gluCylinder(quad, 0.06, 0.05, 0.45, 16, 16)
+        glPopMatrix()
+
+    glColor3f(0.8, 0.4, 0.0)                        # Body
+    glPushMatrix()
+    glTranslatef(0, 0.95, 0)
+    glScalef(0.30, 0.60, 0.20) 
+    glutSolidCube(1)
+    glPopMatrix()
+
+    glColor3f(0.96, 0.8, 0.69)                      # Arms
+    for x_offset in [-0.22, 0.22]:
+        glPushMatrix()
+        glTranslatef(x_offset, 1.10, 0.15)  
+        glRotatef(0, 1, 0, 0)             
+        gluCylinder(quad, 0.05, 0.04, 0.35, 16, 16)
+        glPopMatrix()
+
+    glColor3f(0.05, 0.05, 0.05)                     # Head
+    glPushMatrix()
+    glTranslatef(0, 1.55, 0)
+    glutSolidSphere(0.18, 20, 20)
+    glPopMatrix()
+
+    glColor3f(0.6, 0.6, 0.6)                        # Helmet
+    glPushMatrix()
+    glTranslatef(0, 1.62, 0)
+    glutSolidSphere(0.20, 20, 20)
+    glPopMatrix()
+
+    glPushMatrix()                                  # Flashlight
+    glTranslatef(0, 1.70, 0.16)
+    glRotatef(-90, 1, 0, 0)
+    glColor3f(0.2, 0.2, 0.2)
+    gluCylinder(quad, 0.04, 0.04, 0.12, 12, 12)
+    glTranslatef(0, 0, 0.12)
+    glColor3f(1.0, 1.0, 0.8)
+    glutSolidSphere(0.04, 12, 12)
+    glPopMatrix()
+
+    gluDeleteQuadric(quad)
+    glPopMatrix()
 
 def draw_boxes():
     return
