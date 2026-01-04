@@ -52,13 +52,13 @@ shadow_len = 1.0
 cheat_mode = False   
 cheat_vision = False 
 item_pickups = []
-item_count = 8
+item_count = 15
 in_menu = True
 light_boost = 0.0
 slow_enemies = 0.0
 speed_boost = 0.0
 collectibles = []
-collectible_count = 5
+collectible_count = 30
 collectible_radius = 10
 structures = []
 outfit_colors = [
@@ -218,7 +218,7 @@ def in_flash(pos):
     target_x, target_y = pos[0], pos[1]
     delta_x, delta_y = target_x - player_x, target_y - player_y
     distance = math.hypot(delta_x, delta_y)
-    if distance > flash_range:
+    if distance > flash_range * 1.05:
         return False
     cam_x, cam_y = cam_direction[0], cam_direction[1]
     cam_length = math.hypot(cam_x, cam_y)
@@ -228,7 +228,7 @@ def in_flash(pos):
     cos_angle = dot / (cam_length * distance)
     cos_angle = max(-1.0, min(1.0, cos_angle))
     angle_deg = math.degrees(math.acos(cos_angle))
-    return angle_deg <= (flash_fov * 0.5)
+    return angle_deg <= ((flash_fov * 0.5) + 5.0)
 
 def draw_player():
     if view == "first_person":
@@ -237,6 +237,9 @@ def draw_player():
         base = 0.72
     else:
         base = 0.5
+    if shadows and flash_on:
+        draw_shadow(player_xyz[0], player_xyz[1], player_radius * shadow_len)
+
     glPushMatrix()
     glTranslatef(player_xyz[0], player_xyz[1], player_radius)
     glRotatef(player_yaw - 90.0, 0, 0, 1)
@@ -287,10 +290,7 @@ def draw_player():
     glScalef(player_radius * 0.35, player_radius * 0.35, player_radius * 1.25)
     glutSolidCube(1.0)
     glPopMatrix()
-
     glPopMatrix()
-    if shadows and flash_on:
-        draw_shadow(player_xyz[0], player_xyz[1], player_radius * shadow_len)
 
 def draw_collectible(x, y, z, radius):
     glPushMatrix()
@@ -349,7 +349,7 @@ def draw_enemies():
     for enemy in enemies:
         visible = in_flash(enemy["pos"])
         t = time.time()
-        base_col = (0.32, 0.78, 0.46)  # cooler green for contrast
+        base_col = (0.32, 0.78, 0.46)  
         if t < slow_enemies:
             if visible:
                 glColor3f(0.8, 0.8, 0.8)
@@ -397,10 +397,7 @@ def draw_enemies():
         glScalef(enemy["r"] * 0.4, enemy["r"] * 0.4, enemy["r"] * 1.4)
         glutSolidCube(1.0)
         glPopMatrix()
-
         glPopMatrix()
-        if shadows and flash_on:
-            draw_shadow(enemy["pos"][0], enemy["pos"][1], enemy["r"] * shadow_len)
 
 def setup_camera():
     global cam_direction, camera_eye
@@ -516,23 +513,23 @@ def draw_structures():
         ),
         reverse=True
     )
-    for s in sorted_structures:
-        sx, sy = s["pos"]
-        w, d, h = s["w"], s["d"], s["h"]
-        t = s.get("type", 0)
-        visible = in_flash([sx, sy, 0.0])
-        if t == 0:
+    for structure in sorted_structures:
+        structure_x, structure_y = structure["pos"]
+        width, depth, height = structure["w"], structure["d"], structure["h"]
+        structure_type = structure.get("type", 0)
+        visible = in_flash([structure_x, structure_y, 0.0])
+        if structure_type == 0:
             base_col = (0.2, 0.2, 0.25)
-        elif t == 1:
+        elif structure_type == 1:
             base_col = (0.18, 0.14, 0.12)
         else:
             base_col = (0.22, 0.18, 0.2)
         if not visible:
-            base_col = tuple(c * 0.35 for c in base_col)
+            base_col = tuple(component * 0.35 for component in base_col)
         glColor3f(*base_col)
         glPushMatrix()
-        glTranslatef(sx, sy, h/2.0)
-        glScalef(w, d, h)
+        glTranslatef(structure_x, structure_y, height/2.0)
+        glScalef(width, depth, height)
         glutSolidCube(1.0)
         glPopMatrix()
 
@@ -665,7 +662,7 @@ def update_game(dt):
     update_enemies(dt)
     check_item_pickups()
     if flash_on and (not cheat_mode):
-        flash_battery -= 2.0 * dt
+        flash_battery -= 1.2 * dt
         if flash_battery < 0.0:
             flash_battery = 0.0
     effects()
@@ -808,38 +805,9 @@ def idle():
     update_game(dt)
     glutPostRedisplay()
 
-def display():
-    glViewport(0, 0, win_width, win_height)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glLoadIdentity()
-    if in_menu:
-        draw_menu()
-        glutSwapBuffers()
-        return
-    setup_camera()
-    draw_ground()
-    draw_walls()
-    draw_structures()
-    draw_items()
-    draw_enemies()
-    if flash_on:
-        glColor3f(0.55, 0.52, 0.36)
-        center_ang = math.atan2(cam_direction[1], cam_direction[0])
-        half_ang = math.radians(flash_fov) * 0.5
-        steps = 28
-        glBegin(GL_TRIANGLE_FAN)
-        glVertex3f(player_xyz[0], player_xyz[1], 2.0)
-        for i in range(steps + 1):
-            a = center_ang - half_ang + (2 * half_ang) * (i / steps)
-            glVertex3f(
-                player_xyz[0] + math.cos(a) * flash_range,
-                player_xyz[1] + math.sin(a) * flash_range,
-                2.0
-            )
-        glEnd()
-    draw_player()
-    mode = "FPV" if view == "first_person" else "TPV"
 
+def update_text():
+    mode = "FPV" if view == "first_person" else "TPV"
     font = GLUT_BITMAP_HELVETICA_18
     color_names = ["Red", "Green", "Blue", "Yellow", "Orange", "Purple", "Cyan", "Magenta"]
     outfit_name = color_names[current_outfit_index]
@@ -887,10 +855,56 @@ def display():
         draw_text(10, y,     "Controls:")
         draw_text(10, y-25,  "WASD move | Arrow keys rotate/tilt | P pause | L-click flashlight | R-click FPV toggle")
         draw_text(10, y-50,  "X run | C god | V vision | T shadows | R reset | H help")
-    glutSwapBuffers()
 
-def init():
-    return
+
+def flash_mode():
+    setup_camera()
+    draw_ground()
+    if flash_on:
+        glColor3f(0.5, 0.45, 0.3)
+        center_ang = math.atan2(cam_direction[1], cam_direction[0])
+        half_ang = math.radians(flash_fov) * 0.5
+        steps = 28
+        glBegin(GL_LINES)
+        for i in range(steps + 1):
+            a = center_ang - half_ang + (2 * half_ang) * (i / steps)
+            end_x = player_xyz[0] + math.cos(a) * flash_range
+            end_y = player_xyz[1] + math.sin(a) * flash_range
+            glVertex3f(player_xyz[0], player_xyz[1], 2.0)
+            glVertex3f(end_x, end_y, 2.0)
+        glEnd()
+        glBegin(GL_LINES)
+        for i in range(steps):
+            a1 = center_ang - half_ang + (2 * half_ang) * (i / steps)
+            a2 = center_ang - half_ang + (2 * half_ang) * ((i + 1) / steps)
+            glVertex3f(
+                player_xyz[0] + math.cos(a1) * flash_range,
+                player_xyz[1] + math.sin(a1) * flash_range,
+                2.0
+            )
+            glVertex3f(
+                player_xyz[0] + math.cos(a2) * flash_range,
+                player_xyz[1] + math.sin(a2) * flash_range,
+                2.0
+            )
+        glEnd()
+    draw_walls()
+    draw_structures()
+    draw_items()
+    draw_enemies()
+    draw_player()
+
+def display():
+    glViewport(0, 0, win_width, win_height)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glLoadIdentity()
+    if in_menu:
+        draw_menu()
+        glutSwapBuffers()
+        return
+    flash_mode()
+    update_text()
+    glutSwapBuffers()
 
 def main():
     glutInit()
@@ -898,7 +912,6 @@ def main():
     glutInitWindowSize(win_width, win_height)
     glutInitWindowPosition(0, 0)
     glutCreateWindow(b"3D Light & Shadow Game")
-    init()
     spawn_enemies()
     spawn_items()
     spawn_structures()
