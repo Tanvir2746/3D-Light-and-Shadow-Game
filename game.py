@@ -493,15 +493,12 @@ def spawn_structures(count=30):
 
 def draw_structures():
     eye_x, eye_y, eye_z = camera_eye
-    sorted_structures = sorted(
-        structures,
-        key=lambda s: (
-            (s["pos"][0] - eye_x) ** 2 +
-            (s["pos"][1] - eye_y) ** 2 +
-            ((s["h"] * 0.5) - eye_z) ** 2
-        ),
-        reverse=True
-    )
+    def structure_distance_sq(structure):
+        dx = structure["pos"][0] - eye_x
+        dy = structure["pos"][1] - eye_y
+        dz = (structure["h"] * 0.5) - eye_z
+        return dx * dx + dy * dy + dz * dz
+    sorted_structures = sorted(structures, key=structure_distance_sq, reverse=True)
     for structure in sorted_structures:
         structure_x, structure_y = structure["pos"]
         width, depth, height = structure["w"], structure["d"], structure["h"]
@@ -550,10 +547,10 @@ def update_enemies(dt):
     else:
         slow_factor = 1.0
     for enemy in enemies:
-        ex, ey = enemy["pos"][0], enemy["pos"][1]
-        px, py = player_xyz[0], player_xyz[1]
-        dx = ex - px
-        dy = ey - py
+        enemy_x, enemy_y = enemy["pos"][0], enemy["pos"][1]
+        player_x, player_y = player_xyz[0], player_xyz[1]
+        delta_x = enemy_x - player_x
+        delta_y = enemy_y - player_y
         visible = in_flash(enemy["pos"])
         if enemy.get("state") == "idle":
             if visible:
@@ -561,16 +558,16 @@ def update_enemies(dt):
         speed = enemy["base_speed"] * slow_factor
         if enemy.get("state") == "chase":
             speed *= enemy_chase_speed
-            vx = px - ex
-            vy = py - ey
-            length = math.sqrt(vx*vx + vy*vy)
+            chase_x = player_x - enemy_x
+            chase_y = player_y - enemy_y
+            length = math.sqrt(chase_x * chase_x + chase_y * chase_y)
             if length != 0:
-                nx = vx / length
-                ny = vy / length
+                norm_x = chase_x / length
+                norm_y = chase_y / length
             else:
-                nx, ny = 0.0, 0.0
-            new_x = enemy["pos"][0] + nx * speed * 60.0 * dt
-            new_y = enemy["pos"][1] + ny * speed * 60.0 * dt
+                norm_x, norm_y = 0.0, 0.0
+            new_x = enemy["pos"][0] + norm_x * speed * 60.0 * dt
+            new_y = enemy["pos"][1] + norm_y * speed * 60.0 * dt
             collided = False
             for s in structures:
                 sx, sy = s["pos"]
@@ -592,9 +589,9 @@ def update_enemies(dt):
             enemy["pos"][1] = playable_min
         elif enemy["pos"][1] > playable_max:
             enemy["pos"][1] = playable_max
-        dx2 = enemy["pos"][0] - px
-        dy2 = enemy["pos"][1] - py
-        dist_sq = dx2*dx2 + dy2*dy2
+        separation_x = enemy["pos"][0] - player_x
+        separation_y = enemy["pos"][1] - player_y
+        dist_sq = separation_x * separation_x + separation_y * separation_y
         if dist_sq <= (enemy["r"] + player_radius) ** 2:
             if enemy.get("state") != "idle":
                 if (not cheat_mode) and (t - last_damage > enemy_damage_cooldown):
@@ -792,7 +789,10 @@ def mouse(button, state, x, y):
     if button == GLUT_LEFT_BUTTON:
         flash_on = not flash_on
     elif button == GLUT_RIGHT_BUTTON:
-        view = "first_person" if view == "third_person" else "third_person"
+        if view == "third_person":
+            view = "first_person"
+        else:
+            view = "third_person"
 
 def idle():
     global last_time
