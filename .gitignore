@@ -1,5 +1,6 @@
 opengl_env/
-base.py
+dash.py
 rand.py
 struc.py
 asfia.py
+shadow.py

@@ -28,6 +28,7 @@ cam_up_down = -25.0
 fov = 120.0
 cam_direction = [1.0, 0.0, 0.0]  
 view = "third_person"            
+camera_eye = [0.0, 0.0, 0.0]
 player_xyz = [0.0, 0.0, 0.0]
 player_radius = 25.0
 player_speed = 5.0
@@ -56,19 +57,16 @@ shadows = True
 shadow_len = 1.0
 cheat_mode = False   
 cheat_vision = False 
-hidden_items = []
-items = 8
+item_pickups = []
+item_count = 8
 in_menu = True
 light_boost = 0.0
 slow_enemies = 0.0
 speed_boost = 0.0
 collectibles = []
-powerups = []
 collectible_count = 5
 collectible_radius = 10
 structures = []
-
-# Outfit selections (cycled with the 'u' key)
 outfit_colors = [
     [1.0, 0.0, 0.0],
     [0.0, 1.0, 0.0],
@@ -105,77 +103,70 @@ def draw_menu():
     glMatrixMode(GL_MODELVIEW)
     glPushMatrix()
     glLoadIdentity()
-    glDisable(GL_DEPTH_TEST)
-    glColor3f(0.02, 0.02, 0.02)
-    glBegin(GL_QUADS)
-    glVertex2f(0, 0)
-    glVertex2f(win_width, 0)
-    glVertex2f(win_width, win_height)
-    glVertex2f(0, win_height)
-    glEnd()
-    bw, bh = 480, 140
-    bx = (win_width - bw) / 2
-    by = (win_height - bh) / 2
+    menu_width, menu_height = 480, 140
+    menu_x = (win_width - menu_width) / 2
+    menu_y = (win_height - menu_height) / 2
     glColor3f(0.12, 0.12, 0.12)
     glBegin(GL_QUADS)
-    glVertex2f(bx, by)
-    glVertex2f(bx + bw, by)
-    glVertex2f(bx + bw, by + bh)
-    glVertex2f(bx, by + bh)
+    glVertex2f(menu_x, menu_y)
+    glVertex2f(menu_x + menu_width, menu_y)
+    glVertex2f(menu_x + menu_width, menu_y + menu_height)
+    glVertex2f(menu_x, menu_y + menu_height)
     glEnd()
     glColor3f(1.0, 1.0, 1.0)
     glLineWidth(2.0)
-    glBegin(GL_LINE_LOOP)
-    glVertex2f(bx, by)
-    glVertex2f(bx + bw, by)
-    glVertex2f(bx + bw, by + bh)
-    glVertex2f(bx, by + bh)
+    glBegin(GL_LINES)
+    glVertex2f(menu_x, menu_y)
+    glVertex2f(menu_x + menu_width, menu_y)
+    glVertex2f(menu_x + menu_width, menu_y)
+    glVertex2f(menu_x + menu_width, menu_y + menu_height)
+    glVertex2f(menu_x + menu_width, menu_y + menu_height)
+    glVertex2f(menu_x, menu_y + menu_height)
+    glVertex2f(menu_x, menu_y + menu_height)
+    glVertex2f(menu_x, menu_y)
     glEnd()
+    glClear(GL_DEPTH_BUFFER_BIT)
+    glColor3f(1.0, 1.0, 1.0)
+    font = GLUT_BITMAP_TIMES_ROMAN_24
+    label = "Press SPACE to start"
+    char_width = 10
+    total_width = len(label) * char_width
+    start_x = int(win_width / 2) - (total_width // 2)
+    start_y = int(win_height / 2)
     glPopMatrix()
     glMatrixMode(GL_PROJECTION)
     glPopMatrix()
     glMatrixMode(GL_MODELVIEW)
-    glEnable(GL_DEPTH_TEST)
-    glColor3f(1.0, 1.0, 1.0)
-    font = GLUT_BITMAP_TIMES_ROMAN_24
-    label = "Press SPACE to start"
-    total_w = sum(glutBitmapWidth(font, ord(ch)) for ch in label)
-    start_x = int(win_width / 2) - (total_w // 2)
-    y = int(win_height / 2) + 20
-    draw_text(start_x, y, label, font)
+    draw_text(start_x, start_y, label, font)
     draw_text(10, 60, "Controls: WASD move | Arrow keys rotate/tilt | P pause | L-click flashlight | R-click FPV toggle")
-    draw_text(10, 35, "X run | C god | V vision | O outfit | T shadows | R reset | H help")
+    draw_text(10, 35, "X run | C god | V vision | T shadows | R reset | H help")
 
 
 def draw_ground():
     glBegin(GL_QUADS)
-    glColor3f(0.12, 0.12, 0.12)
-
+    glColor3f(0.08, 0.09, 0.10)
     glVertex3f(-grid_length, grid_length, 0)
     glVertex3f(0, grid_length, 0)
     glVertex3f(0, 0, 0)
     glVertex3f(-grid_length, 0, 0)
-
-    glColor3f(0.10, 0.10, 0.16)
+    glColor3f(0.07, 0.09, 0.12)
     glVertex3f(grid_length, -grid_length, 0)
     glVertex3f(0, -grid_length, 0)
     glVertex3f(0, 0, 0)
     glVertex3f(grid_length, 0, 0)
-
-    glColor3f(0.10, 0.14, 0.10)
+    glColor3f(0.08, 0.11, 0.09)
     glVertex3f(-grid_length, -grid_length, 0)
     glVertex3f(-grid_length, 0, 0)
     glVertex3f(0, 0, 0)
     glVertex3f(0, -grid_length, 0)
-
-    glColor3f(0.14, 0.10, 0.10)
+    glColor3f(0.11, 0.09, 0.10)
     glVertex3f(grid_length, grid_length, 0)
     glVertex3f(grid_length, 0, 0)
     glVertex3f(0, 0, 0)
     glVertex3f(0, grid_length, 0)
     glEnd()
 
-    glColor3f(0.25, 0.25, 0.25)
+    glColor3f(0.2, 0.22, 0.24)
     glBegin(GL_LINES)
     step = 100
     for x in range(-grid_length, grid_length + 1, step):
@@ -217,60 +208,59 @@ def draw_shadow(x, y, r):
     glBegin(GL_POINTS)
     steps = 160
     for i in range(steps):
-        ang = (i / steps) * 2.0 * math.pi
-        for d in range(0, int(r), 2):
-            px = x + math.cos(ang) * d
-            py = y + math.sin(ang) * d
-            glVertex3f(px, py, 0.5)
+        angle = (i / steps) * 2.0 * math.pi
+        for distance in range(0, int(r), 2):
+            point_x = x + math.cos(angle) * distance
+            point_y = y + math.sin(angle) * distance
+            glVertex3f(point_x, point_y, 0.5)
     glEnd()
 
 def in_flash(pos):
-    # Cheat vision reveals everything regardless of flashlight state
     if cheat_vision:
         return True
     if not flash_on:
         return False
-    px, py = player_xyz[0], player_xyz[1]
-    ox, oy = pos[0], pos[1]
-    dx, dy = ox - px, oy - py
-    dist = math.hypot(dx, dy)
-    if dist > flash_range:
+    player_x, player_y = player_xyz[0], player_xyz[1]
+    target_x, target_y = pos[0], pos[1]
+    delta_x, delta_y = target_x - player_x, target_y - player_y
+    distance = math.hypot(delta_x, delta_y)
+    if distance > flash_range:
         return False
-    fx, fy = cam_direction[0], cam_direction[1]
-    cam_len = math.hypot(fx, fy)
-    if cam_len == 0 or dist == 0:
+    cam_x, cam_y = cam_direction[0], cam_direction[1]
+    cam_length = math.hypot(cam_x, cam_y)
+    if cam_length == 0 or distance == 0:
         return True
-    dot = fx * dx + fy * dy
-    cosang = dot / (cam_len * dist)
-    cosang = max(-1.0, min(1.0, cosang))
-    ang_deg = math.degrees(math.acos(cosang))
-    return ang_deg <= (flash_fov * 0.5)
+    dot = cam_x * delta_x + cam_y * delta_y
+    cos_angle = dot / (cam_length * distance)
+    cos_angle = max(-1.0, min(1.0, cos_angle))
+    angle_deg = math.degrees(math.acos(cos_angle))
+    return angle_deg <= (flash_fov * 0.5)
 
 def draw_player():
     if view == "first_person":
         return
-    base = 0.7 if flash_on else 0.45
+    if flash_on == True:
+        base = 0.72
+    else:
+        base = 0.5
     glPushMatrix()
     glTranslatef(player_xyz[0], player_xyz[1], player_radius)
     glRotatef(player_yaw - 90.0, 0, 0, 1)
 
-    # Torso
-    glColor3f(player_color[0]*base, player_color[1]*base, player_color[2]*base)
+    glColor3f(player_color[0]*base, player_color[1]*base, player_color[2]*base) # body
     glPushMatrix()
     glScalef(player_radius * 0.6, player_radius * 0.6, player_radius * 1.6)
     glutSolidCube(1.0)
     glPopMatrix()
 
-    # Head
-    glPushMatrix()
+    glPushMatrix()                                                  # Head
     glTranslatef(0, 0, player_radius * 1.2)
     glutSolidSphere(player_radius * 0.6, 16, 16)
     glPopMatrix()
 
-    # Head-mounted flashlight body and lens
-    glPushMatrix()
-    glTranslatef(player_radius * 0.9, 0, player_radius * 1.2)
-    glRotatef(-90, 1, 0, 0)
+    glPushMatrix()                                                  # Flashlight
+    glTranslatef(0, 0, player_radius * 1.9) 
+    glRotatef(-90, 1, 0, 0)  
     glPushMatrix()
     glColor3f(0.85, 0.85, 0.85)
     glScalef(player_radius * 0.25, player_radius * 0.25, player_radius * 0.6)
@@ -278,11 +268,10 @@ def draw_player():
     glPopMatrix()
     glTranslatef(0, 0, player_radius * 0.35)
     glColor3f(1.0, 1.0, 0.6)
-    glutSolidCone(player_radius * 0.15, player_radius * 0.25, 10, 2)
+    glutSolidSphere(player_radius * 0.18, 10, 10)
     glPopMatrix()
 
-    # Arms
-    glPushMatrix()
+    glPushMatrix()                                                   # Arms
     glTranslatef(player_radius * 0.65, 0, player_radius * 0.45)
     glScalef(player_radius * 0.3, player_radius * 0.3, player_radius * 1.1)
     glutSolidCube(1.0)
@@ -294,13 +283,11 @@ def draw_player():
     glutSolidCube(1.0)
     glPopMatrix()
 
-    # Legs
-    glPushMatrix()
+    glPushMatrix()                                                   # Legs
     glTranslatef(player_radius * 0.28, 0, -player_radius * 0.35)
     glScalef(player_radius * 0.35, player_radius * 0.35, player_radius * 1.25)
     glutSolidCube(1.0)
     glPopMatrix()
-
     glPushMatrix()
     glTranslatef(-player_radius * 0.28, 0, -player_radius * 0.35)
     glScalef(player_radius * 0.35, player_radius * 0.35, player_radius * 1.25)
@@ -308,10 +295,9 @@ def draw_player():
     glPopMatrix()
 
     glPopMatrix()
-    if shadows:
+    if shadows and flash_on:
         draw_shadow(player_xyz[0], player_xyz[1], player_radius * shadow_len)
 
-# Collectible star (points)
 def draw_collectible(x, y, z, radius):
     glPushMatrix()
     glTranslatef(x, y, z)
@@ -320,57 +306,33 @@ def draw_collectible(x, y, z, radius):
         glPushMatrix()
         glRotatef(i * 72, 0, 0, 1)
         glTranslatef(radius, 0, 0)
-        glutSolidCone(radius/3, radius, 10, 2)
+        glPushMatrix()
+        glScalef(radius/3, radius/3, radius)
+        glutSolidCube(1.0)
+        glPopMatrix()
         glPopMatrix()
     glColor3f(1.0, 0.8, 0.0)
     glutSolidSphere(radius/2, 10, 10)
     glPopMatrix()
 
-# Power-up renderings
-def draw_powerup(x, y, z, radius, powerup_type):
-    glPushMatrix()
-    glTranslatef(x, y, z)
-    if powerup_type == "light_boost":
-        glColor3f(0.0, 1.0, 1.0)
-        glutSolidSphere(radius, 15, 15)
-        glColor3f(1.0, 1.0, 1.0)
-        glutSolidSphere(radius * 0.7, 12, 12)
-    elif powerup_type == "slow_enemies":
-        glColor3f(0.5, 0.8, 1.0)
-        for i in range(6):
-            glPushMatrix()
-            glRotatef(i * 60, 0, 0, 1)
-            glTranslatef(radius, 0, 0)
-            glutSolidCone(radius/4, radius*1.5, 8, 2)
-            glPopMatrix()
-        glColor3f(1.0, 1.0, 1.0)
-        glutSolidSphere(radius/2, 10, 10)
-    elif powerup_type == "speed_boost":
-        glColor3f(1.0, 0.8, 0.0)
-        glBegin(GL_QUADS)
-        glVertex3f(-radius, 0, 0)
-        glVertex3f(0, radius, 0)
-        glVertex3f(radius, 0, 0)
-        glVertex3f(0, -radius, 0)
-        glEnd()
-    glPopMatrix()
-
 def draw_items():
-    for item in hidden_items:
+    for item in item_pickups:
         if item["collected"]:
             continue
         visible = in_flash(item["pos"])
         if (not visible) and (not cheat_vision):
             continue
-        t = item["type"]
-        if t == "flash_recharge":
+        item_type = item["type"]
+        if item_type == "flash_recharge":
             glColor3f(*colors["yellow"])
-        elif t == "life_refill":
+        elif item_type == "life_refill":
             glColor3f(*colors["green"])
-        elif t == "light_boost":
+        elif item_type == "light_boost":
             glColor3f(*colors["blue"])
-        elif t == "slow_enemies":
+        elif item_type == "slow_enemies":
             glColor3f(*colors["red"])
+        elif item_type == "speed_boost":
+            glColor3f(*colors["orange"])
         else:
             glColor3f(*colors["white"])
         glPushMatrix()
@@ -389,20 +351,11 @@ def draw_items():
         if shadows:
             draw_shadow(collectible["pos"][0], collectible["pos"][1], collectible_radius * shadow_len)
 
-    for powerup in powerups:
-        if powerup.get("collected"):
-            continue
-        if (not in_flash(powerup["pos"])) and (not cheat_vision):
-            continue
-        draw_powerup(powerup["pos"][0], powerup["pos"][1], 15, powerup["r"], powerup["type"])
-        if shadows:
-            draw_shadow(powerup["pos"][0], powerup["pos"][1], powerup["r"] * shadow_len)
-
 def draw_enemies():
     for enemy in enemies:
         visible = in_flash(enemy["pos"])
         t = time.time()
-        base_col = (0.4, 0.75, 0.4)  # zombie green
+        base_col = (0.32, 0.78, 0.46)  # cooler green for contrast
         if t < slow_enemies:
             if visible:
                 glColor3f(0.8, 0.8, 0.8)
@@ -417,26 +370,22 @@ def draw_enemies():
         glPushMatrix()
         glTranslatef(enemy["pos"][0], enemy["pos"][1], enemy["r"])
 
-        # Torso
-        glPushMatrix()
+        glPushMatrix()                                                  # Torso
         glScalef(enemy["r"] * 0.7, enemy["r"] * 0.7, enemy["r"] * 1.8)
         glutSolidCube(1.0)
         glPopMatrix()
 
-        # Head
-        glPushMatrix()
+        glPushMatrix()                                                  # Head
         glTranslatef(0, 0, enemy["r"] * 1.2)
         glutSolidSphere(enemy["r"] * 0.7, 14, 14)
         glPopMatrix()
 
-        # Arms forward (zombie pose)
-        glPushMatrix()
+        glPushMatrix()                                                  # Arms
         glTranslatef(enemy["r"] * 0.8, 0, enemy["r"] * 0.45)
         glRotatef(20, 0, 1, 0)
         glScalef(enemy["r"] * 0.35, enemy["r"] * 0.35, enemy["r"] * 1.35)
         glutSolidCube(1.0)
         glPopMatrix()
-
         glPushMatrix()
         glTranslatef(-enemy["r"] * 0.8, 0, enemy["r"] * 0.45)
         glRotatef(-20, 0, 1, 0)
@@ -444,13 +393,11 @@ def draw_enemies():
         glutSolidCube(1.0)
         glPopMatrix()
 
-        # Legs
-        glPushMatrix()
+        glPushMatrix()                                                 # Legs
         glTranslatef(enemy["r"] * 0.38, 0, -enemy["r"] * 0.45)
         glScalef(enemy["r"] * 0.4, enemy["r"] * 0.4, enemy["r"] * 1.4)
         glutSolidCube(1.0)
         glPopMatrix()
-
         glPushMatrix()
         glTranslatef(-enemy["r"] * 0.38, 0, -enemy["r"] * 0.45)
         glScalef(enemy["r"] * 0.4, enemy["r"] * 0.4, enemy["r"] * 1.4)
@@ -458,14 +405,14 @@ def draw_enemies():
         glPopMatrix()
 
         glPopMatrix()
-        if shadows:
+        if shadows and flash_on:
             draw_shadow(enemy["pos"][0], enemy["pos"][1], enemy["r"] * shadow_len)
 
 def setup_camera():
-    global cam_direction
-    fx = math.cos(math.radians(camera_angle))
-    fy = math.sin(math.radians(camera_angle))
-    cam_direction = [fx, fy, 0.0]
+    global cam_direction, camera_eye
+    cam_dir_x = math.cos(math.radians(camera_angle))
+    cam_dir_y = math.sin(math.radians(camera_angle))
+    cam_direction = [cam_dir_x, cam_dir_y, 0.0]
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     aspect_ratio = win_width / float(win_height)
@@ -476,17 +423,19 @@ def setup_camera():
         eye_x = player_xyz[0]
         eye_y = player_xyz[1]
         eye_z = 55.0
-        look_x = eye_x + fx * 120.0
-        look_y = eye_y + fy * 120.0
+        look_x = eye_x + cam_dir_x * 120.0
+        look_y = eye_y + cam_dir_y * 120.0
         look_z = eye_z
+        camera_eye = [eye_x, eye_y, eye_z]
         gluLookAt(eye_x, eye_y, eye_z,
                   look_x, look_y, look_z,
                   0, 0, 1)
     else:
-        eye_x = player_xyz[0] - fx * 200.0
-        eye_y = player_xyz[1] - fy * 200.0
+        eye_x = player_xyz[0] - cam_dir_x * 200.0
+        eye_y = player_xyz[1] - cam_dir_y * 200.0
         eye_z = 100.0 + cam_up_down
 
+        camera_eye = [eye_x, eye_y, eye_z]
         gluLookAt(eye_x, eye_y, eye_z,
                   player_xyz[0], player_xyz[1], player_xyz[2],
                   0, 0, 1)
@@ -509,13 +458,20 @@ def spawn_enemies():
         })
 
 def spawn_items():
-    global hidden_items
-    hidden_items = []
-    for _ in range(items):
+    global item_pickups
+    item_pickups = []
+    item_types = [
+        "flash_recharge",
+        "life_refill",
+        "light_boost",
+        "slow_enemies",
+        "speed_boost"
+    ]
+    for _ in range(item_count):
         item_x = random.randint(boundary_min, boundary_max)
         item_y = random.randint(boundary_min, boundary_max)
-        kind = random.choice(["flash_recharge", "life_refill", "light_boost", "slow_enemies"])
-        hidden_items.append({
+        kind = random.choice(item_types)
+        item_pickups.append({
             "pos": [float(item_x), float(item_y), 0.0],
             "r": 15.0,
             "collected": False,
@@ -534,23 +490,6 @@ def spawn_collectibles():
         collectibles.append({
             "pos": [float(x), float(y), 0.0],
             "collected": False
-        })
-
-def spawn_powerups():
-    global powerups
-    powerups = []
-    powerup_types = ["light_boost", "slow_enemies", "speed_boost"]
-    for _ in range(3):
-        while True:
-            x = random.randint(boundary_min, boundary_max)
-            y = random.randint(boundary_min, boundary_max)
-            if math.hypot(x - player_xyz[0], y - player_xyz[1]) > 200:
-                break
-        powerups.append({
-            "pos": [float(x), float(y), 0.0],
-            "r": 15.0,
-            "collected": False,
-            "type": random.choice(powerup_types)
         })
 
 def spawn_structures(count=30):
@@ -573,7 +512,17 @@ def spawn_structures(count=30):
         })
 
 def draw_structures():
-    for s in structures:
+    eye_x, eye_y, eye_z = camera_eye
+    sorted_structures = sorted(
+        structures,
+        key=lambda s: (
+            (s["pos"][0] - eye_x) ** 2 +
+            (s["pos"][1] - eye_y) ** 2 +
+            ((s["h"] * 0.5) - eye_z) ** 2
+        ),
+        reverse=True
+    )
+    for s in sorted_structures:
         sx, sy = s["pos"]
         w, d, h = s["w"], s["d"], s["h"]
         t = s.get("type", 0)
@@ -668,14 +617,15 @@ def update_enemies(dt):
         dy2 = enemy["pos"][1] - py
         dist_sq = dx2*dx2 + dy2*dy2
         if dist_sq <= (enemy["r"] + player_radius) ** 2:
-            if (not cheat_mode) and (t - last_damage > enemy_damage_cooldown):
-                lives -= 1
-                last_damage = t
+            if enemy.get("state") != "idle":
+                if (not cheat_mode) and (t - last_damage > enemy_damage_cooldown):
+                    lives -= 1
+                    last_damage = t
 
 def check_item_pickups():
     global lives, flash_battery, light_boost, slow_enemies, score, speed_boost
     px, py = player_xyz[0], player_xyz[1]
-    for item in hidden_items:
+    for item in item_pickups:
         if item["collected"]:
             continue
         dx = item["pos"][0] - px
@@ -686,15 +636,17 @@ def check_item_pickups():
             item["collected"] = True
             score += 5
 
-            t = item["type"]
-            if t == "life_refill":
+            item_type = item["type"]
+            if item_type == "life_refill":
                 lives = min(10, lives + 1)
-            elif t == "flash_recharge":
+            elif item_type == "flash_recharge":
                 flash_battery = min(100.0, flash_battery + 30.0)
-            elif t == "light_boost":
+            elif item_type == "light_boost":
                 light_boost = time.time() + 10.0
-            elif t == "slow_enemies":
+            elif item_type == "slow_enemies":
                 slow_enemies = time.time() + 8.0
+            elif item_type == "speed_boost":
+                speed_boost = time.time() + 6.0
 
     for collectible in collectibles:
         if collectible.get("collected"):
@@ -705,28 +657,14 @@ def check_item_pickups():
             collectible["collected"] = True
             score += 5
 
-    for powerup in powerups:
-        if powerup.get("collected"):
-            continue
-        dx = powerup["pos"][0] - px
-        dy = powerup["pos"][1] - py
-        if dx*dx + dy*dy <= (powerup["r"] + player_radius) ** 2:
-            powerup["collected"] = True
-            if powerup["type"] == "light_boost":
-                light_boost = time.time() + 10.0
-            elif powerup["type"] == "slow_enemies":
-                slow_enemies = time.time() + 8.0
-            elif powerup["type"] == "speed_boost":
-                speed_boost = time.time() + 6.0
-
 def can_move_to(x, y, radius):
     if x < boundary_min or x > boundary_max or y < boundary_min or y > boundary_max:
         return False
     for s in structures:
         sx, sy = s["pos"]
-        hw = s["w"] / 2.0 + radius
-        hd = s["d"] / 2.0 + radius
-        if abs(x - sx) < hw and abs(y - sy) < hd:
+        half_width = s["w"] / 2.0 + radius
+        half_depth = s["d"] / 2.0 + radius
+        if abs(x - sx) < half_width and abs(y - sy) < half_depth:
             return False
     return True
 
@@ -744,9 +682,7 @@ def update_game(dt):
     check_game_over()
 
 def reset_game():
-    global player_xyz, lives, score, game_over, paused, flash_battery
-    global cheat_mode, cheat_vision, light_boost, slow_enemies, speed_boost, view
-    global camera_angle, cam_up_down, running, player_color, current_outfit_index
+    global player_xyz, lives, score, game_over, paused, flash_battery, cheat_mode, cheat_vision, light_boost, slow_enemies, speed_boost, view, camera_angle, cam_up_down, running, player_color, current_outfit_index
     player_xyz = [0.0, 0.0, 0.0]
     lives = 5
     score = 0
@@ -768,7 +704,6 @@ def reset_game():
     spawn_items()
     spawn_structures()
     spawn_collectibles()
-    spawn_powerups()
 
 
 def change_outfit():
@@ -804,9 +739,6 @@ def keyboardListener(key, x, y):
     if key == b'v':
         cheat_vision = not cheat_vision
         return
-    if key == b'o':
-        player_color = [random.random(), random.random(), random.random()]
-        return
     if key == b'u':
         change_outfit()
         return
@@ -819,29 +751,29 @@ def keyboardListener(key, x, y):
     if game_over or paused:
         return
     speed = run_speed if running else player_speed
-    fx, fy = cam_direction[0], cam_direction[1]
-    rx, ry = -fy, fx
+    forward_x, forward_y = cam_direction[0], cam_direction[1]
+    right_x, right_y = -forward_y, forward_x
     if key == b'w':
-        nx = player_xyz[0] + fx * speed
-        ny = player_xyz[1] + fy * speed
+        nx = player_xyz[0] + forward_x * speed
+        ny = player_xyz[1] + forward_y * speed
         if can_move_to(nx, ny, player_radius):
             player_xyz[0] = nx
             player_xyz[1] = ny
     elif key == b's':
-        nx = player_xyz[0] - fx * speed
-        ny = player_xyz[1] - fy * speed
+        nx = player_xyz[0] - forward_x * speed
+        ny = player_xyz[1] - forward_y * speed
         if can_move_to(nx, ny, player_radius):
             player_xyz[0] = nx
             player_xyz[1] = ny
     elif key == b'd':
-        nx = player_xyz[0] - rx * speed
-        ny = player_xyz[1] - ry * speed
+        nx = player_xyz[0] - right_x * speed
+        ny = player_xyz[1] - right_y * speed
         if can_move_to(nx, ny, player_radius):
             player_xyz[0] = nx
             player_xyz[1] = ny
     elif key == b'a':
-        nx = player_xyz[0] + rx * speed
-        ny = player_xyz[1] + ry * speed
+        nx = player_xyz[0] + right_x * speed
+        ny = player_xyz[1] + right_y * speed
         if can_move_to(nx, ny, player_radius):
             player_xyz[0] = nx
             player_xyz[1] = ny
@@ -896,18 +828,15 @@ def display():
         return
     setup_camera()
     draw_ground()
-    draw_structures()
     draw_walls()
+    draw_structures()
     draw_items()
     draw_enemies()
-    draw_player()
     if flash_on:
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glColor4f(1.0, 1.0, 0.6, 0.18)
+        glColor3f(0.55, 0.52, 0.36)
         center_ang = math.atan2(cam_direction[1], cam_direction[0])
         half_ang = math.radians(flash_fov) * 0.5
-        steps = 18
+        steps = 28
         glBegin(GL_TRIANGLE_FAN)
         glVertex3f(player_xyz[0], player_xyz[1], 2.0)
         for i in range(steps + 1):
@@ -918,7 +847,7 @@ def display():
                 2.0
             )
         glEnd()
-        glDisable(GL_BLEND)
+    draw_player()
     mode = "FPV" if view == "first_person" else "TPV"
 
     font = GLUT_BITMAP_HELVETICA_18
@@ -932,25 +861,21 @@ def display():
         active.append(f"Slow Enemies {int(slow_enemies - t_now)}s")
     if t_now < speed_boost:
         active.append(f"Speed Boost {int(speed_boost - t_now)}s")
-    powerup_line = ", ".join(active) if active else "None"
+    active_effects_line = ", ".join(active) if active else "None"
 
-    # Top-left: score and power-ups
     glColor3f(0.0, 1.0, 1.0)
     draw_text(10, win_height - 25, f"Score: {score}", font)
-    glColor3f(0.8, 0.9, 0.4)
-    draw_text(10, win_height - 50, f"Power-ups: {powerup_line}", font)
-
-    # Top-right: lives and battery
+    glColor3f(0.9, 0.95, 0.6)
+    draw_text(10, win_height - 50, f"Effects: {active_effects_line}", font)
     glColor3f(1.0, 0.8, 0.0)
-    rt1 = f"Lives: {lives}"
-    rt2 = f"Battery: {int(flash_battery)}%"
-    w1 = sum(glutBitmapWidth(font, ord(c)) for c in rt1)
-    w2 = sum(glutBitmapWidth(font, ord(c)) for c in rt2)
-    draw_text(win_width - w1 - 10, win_height - 25, rt1, font)
+    lives_label = f"Lives: {lives}"
+    battery_label = f"Battery: {int(flash_battery)}%"
+    char_w_hud = 10  
+    lives_label_width = len(lives_label) * char_w_hud
+    battery_label_width = len(battery_label) * char_w_hud
+    draw_text(win_width - lives_label_width - 10, win_height - 25, lives_label, font)
     glColor3f(0.8, 0.8, 1.0)
-    draw_text(win_width - w2 - 10, win_height - 50, rt2, font)
-
-    # Middle-top: mode, outfit, toggles
+    draw_text(win_width - battery_label_width - 10, win_height - 50, battery_label, font)
     mid_strings = [
         f"Mode: {mode}",
         f"Outfit (u): {outfit_name}",
@@ -960,7 +885,7 @@ def display():
     y_offset = win_height - 25
     for idx, text in enumerate(mid_strings):
         glColor3f(*colors_mid[idx])
-        w = sum(glutBitmapWidth(font, ord(c)) for c in text)
+        w = len(text) * char_w_hud
         draw_text(int(win_width/2 - w/2), y_offset - idx*25, text, font)
     if paused:
         draw_text(win_width//2 - 50, win_height//2, "PAUSED", GLUT_BITMAP_TIMES_ROMAN_24)
@@ -971,16 +896,13 @@ def display():
         y = win_height - 80
         draw_text(10, y,     "Controls:")
         draw_text(10, y-25,  "WASD move | Arrow keys rotate/tilt | P pause | L-click flashlight | R-click FPV toggle")
-        draw_text(10, y-50,  "X run | C god | V vision | O outfit | T shadows | R reset | H help")
+        draw_text(10, y-50,  "X run | C god | V vision | T shadows | R reset | H help")
     glutSwapBuffers()
 
 def init():
-    glClearColor(0.02, 0.02, 0.02, 1.0)
-    glEnable(GL_DEPTH_TEST)
     global quadric
     quadric = gluNewQuadric()
     spawn_collectibles()
-    spawn_powerups()
 
 def main():
     glutInit()
@@ -993,7 +915,6 @@ def main():
     spawn_items()
     spawn_structures()
     spawn_collectibles()
-    spawn_powerups()
     glutDisplayFunc(display)
     glutKeyboardFunc(keyboardListener)
     glutSpecialFunc(special_keys)
