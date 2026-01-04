@@ -1,0 +1,156 @@
+### **3D Light and Shadow Game**
+
+**Introduction:**
+
+The 3D Light and Shadow Game is a dynamic and immersive puzzle-solving experience where the player controls a movable light source within a dark 3D environment. The primary objective is to use the light to reveal hidden objects, paths, and enemies by manipulating the shadows and illuminating various parts of the world. With the use of OpenGL and GLUT, we can achieve a series of essential features that contribute to the game's interactive and visually engaging gameplay. The following sections outline the features that can be easily and effectively implemented using these libraries.
+
+### **1\. Basic Lighting:**
+
+**Description:**  
+In the 3D Light and Shadow Game, lighting is fundamental to the player’s interaction with the environment. By blending the objects, enemies with environment color and changing the color when flashlight falls upon them the lighting can be achieved.
+
+**Implementation:**
+
+* A flashlight simulation is done by changing colours during rendering.  
+* All objects and enemies are first drawn using dark/dim or environment-matching colours to appear hidden.  
+* The player’s camera direction is treated as the flashlight direction.  
+* In each frame:  
+* The camera position and direction are updated based on player movement.  
+* For every object, a simple distance and angle check determines if the object is in the camera’s “flashlight view”.  
+* If the object is inside this view area, its colour is brightened/highlighted.  
+* If the object is outside, it remains dimmed or blends into the environment.  
+* By adjusting the object colours based on player movement, a light-and-shadow gameplay experience is created without using any lighting functions.
+
+
+### **2\. Basic Shadow Simulation:**
+
+**Description:**  
+While realistic shadow mapping (which is more advanced and requires shaders) is not directly feasible with GLUT, simple shadow effects can be simulated. These shadows can represent an object's cast shadow onto a surface, providing an intuitive visual cue for the player.
+
+**Implementation:**
+
+* Shadows can be created by rendering a dark, 2D circle or ellipse below objects (e.g., cubes or spheres) to simulate their shadow on the floor or nearby surfaces.  
+* This approach is a basic form of shadow rendering but can still enhance the gameplay experience by making the world feel more interactive and visually interesting.
+
+### **3\. Movement and Control:**
+
+**Description:**  
+The player should be able to move through the 3D world, adjusting their view of the scene and light source as needed. GLUT provides an easy way to implement movement and view manipulation based on user inputs.
+
+**Implementation:**
+
+* The gluLookAt() function in OpenGL allows for straightforward camera setup by adjusting the viewpoint and target direction.  
+* Players can use the arrow keys or WASD keys to navigate the scene, and the left-right arrow keys work as camera and player direction setting.
+
+### **4\. Player and Light Interaction:**
+
+**Description:**  
+A core mechanic of the game is player interaction with the environment through light. By moving the light source, the player can reveal hidden objects or uncover new paths, creating an engaging puzzle element. Objects, doors, or areas are only visible when illuminated by the light, prompting the player to solve challenges by strategically positioning the light source.
+
+**Implementation:**
+
+* By comparing the position of the light with that of objects in the scene, the game can trigger events such as revealing objects when they are illuminated.  
+* Also the structures and enemies inside the game are lit up using this same mechanics.
+
+### **5\. Cheat Mode (God Mode and Unlimited Light):**
+
+**Description:**  
+Incorporating a cheat mode gives players the ability to alter the game's difficulty or enable special abilities, enhancing replayability and adding fun. Features like invincibility (God Mode) and unlimited light can be toggled on and off, offering players the freedom to explore the game world without restrictions.
+
+**Implementation:**
+
+* The GOD Cheat mode can be toggled through specific keys (e.g., pressing ‘C’ to activate cheat mode). When activated, the light source could become unlimited in capacity(battery does not drop), or the player could become invincible, ignoring damage from enemies.  
+* Another Cheat Mode is added that is Cheat\_vision that lights up every item, enemies and structures with a drawback of activating the enemy chase.
+
+### **6\. Text and Debugging Information:**
+
+**Description:**  
+To enhance the player's understanding of the game world and provide important feedback, the game will display on-screen text with relevant information, such as the score, life, battery. Additionally, debugging information can be useful for development and debugging purposes.
+
+**Implementation:**
+
+*  showing current game variables or status, which can help track player progress or provide clues.
+
+### **7\. Basic Object Interaction (Collecting Items):**
+
+**Description:**  
+To make the game world interactive, certain objects can be revealed or triggered by the light source. Collectible items can be revealed as the player moves the light around the scene.
+
+**Implementation:**
+
+* Objects or paths that are hidden in shadows can be revealed when illuminated by the light source. This can be achieved by checking whether an object is within the range of the light.  
+* The game can trigger events such as collecting items when the light is shone on specific spots or objects and the player moves to it.
+
+### **8\. Keyboard-Based Camera Rotation Controls**
+
+**Description:**  
+ The player can rotate their viewpoint to look around the dark environment, increasing immersion and providing full control over the flashlight direction.
+
+**Implementation:**
+
+* GLUT’s glutSpecialFunc() is used for arrow keys.  
+* Camera rotation keys:  
+  * Up Arrow → Look upward  
+  * Down Arrow → Look downward  
+  * Left Arrow → Look left  
+  * Right Arrow → Look right  
+* Rotating the camera also updates the direction of the flashlight, helping the player reveal hidden areas.
+
+### **9\. Feature Toggle Controls (Flashlight, Reset, Help)**
+
+**Description:**  
+ Players can toggle different helpful options such as turning the flashlight on/off or resetting the camera with simple keyboard actions. These controls improve accessibility and usability.
+
+**Implementation:**
+
+* Additional keyboard bindings:  
+  * **F** → Toggle flashlight on/off  
+  * **R** → Reset camera/player to starting position  
+  * **H** → Show/Hide Keyboard Instructions   
+* These toggle states are stored as variables and checked each frame before drawing.
+
+### **10\. Running / Speed Boost**
+
+**Description:**  
+ Players can temporarily move faster to escape enemies or navigate quickly.
+
+**Implementation:**
+
+* Keyboard binding:  
+  * **Shift** (hold) → Run (increase movement speed)  
+* When released, speed returns to walking mode.
+
+### **11\. Pause and Menu Navigation**
+
+**Description:**  
+ Basic game control feature to pause or access settings mid-game.
+
+**Implementation:**
+
+* Keyboard binding:  
+  * **P** → Pause/Resume  
+* When paused:  
+  * Player and enemy movement freezes  
+  * Screen darkens and text (PAUSED) displayed
+
+### **12\. Power-Up Items (Light Boost & Enemy Slowdown)**
+
+**Description:**  
+ Collectable power-ups provide temporary advantages.
+
+**Implementation:**
+
+* Light Boost: Flashlight power increases  for 10 seconds.  
+* Enemy Slowdown: Visible enemies move slower for a short time.  
+* Speed Boost: Boost the speed of player
+
+### **13\. Outfit Colour Change (Key: U)**
+
+**Description:**  
+ Allows players to customize their look during gameplay.
+
+**Implementation:**
+
+* Press **U** to randomise the player outfit colour.  
+* Colour updates immediately in the next frame.
+

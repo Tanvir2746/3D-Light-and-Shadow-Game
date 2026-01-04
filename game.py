@@ -11,10 +11,7 @@ colors = {
     "green":  (0.0, 1.0, 0.0),
     "blue":   (0.0, 0.0, 1.0),
     "yellow": (1.0, 1.0, 0.0),
-    "cyan":   (0.0, 1.0, 1.0),
-    "magenta":(1.0, 0.0, 1.0),
-    "orange": (1.0, 0.5, 0.0),
-    "purple": (0.5, 0.0, 0.5)
+    "orange": (1.0, 0.5, 0.0)
 }
 win_width = 1000
 win_height = 800
@@ -22,7 +19,6 @@ grid_length = 2000
 boundary_min = 100 - grid_length
 boundary_max = grid_length - 100
 last_time = time.time()
-delta_time = 0.0
 camera_angle = 0.0
 cam_up_down = -25.0
 fov = 120.0
@@ -50,8 +46,6 @@ show_instructions = False
 flash_on = True
 flash_range = 350.0
 flash_fov = 40.0
-flash_brightness = 2.5
-flash_off_dim = 0.2
 flash_battery = 100.0
 shadows = True
 shadow_len = 1.0
@@ -548,17 +542,13 @@ def check_game_over():
         game_over = True
 
 def effects():
-    global flash_brightness, flash_range, player_speed, run_speed
+    global flash_range, player_speed, run_speed
     t = time.time()
     base_range = 350.0
-    base_brightness = 1.5
-
     if t < light_boost:
         flash_range = base_range * 1.5
-        flash_brightness = base_brightness * 1.5
     else:
         flash_range = base_range
-        flash_brightness = base_brightness
 
     if t < speed_boost:
         player_speed = 10.0
@@ -811,11 +801,11 @@ def mouse(button, state, x, y):
         view = "first_person" if view == "third_person" else "third_person"
 
 def idle():
-    global last_time, delta_time
+    global last_time
     now = time.time()
-    delta_time = now - last_time
+    dt = now - last_time
     last_time = now
-    update_game(delta_time)
+    update_game(dt)
     glutPostRedisplay()
 
 def display():
@@ -900,9 +890,7 @@ def display():
     glutSwapBuffers()
 
 def init():
-    global quadric
-    quadric = gluNewQuadric()
-    spawn_collectibles()
+    return
 
 def main():
     glutInit()
